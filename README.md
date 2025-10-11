@@ -8,6 +8,8 @@ Installing Pao
 ### Prerequisites
 1. [Install Go](https://golang.org/doc/install) (version 1.21 or later)
    * Modern Go uses modules, so you don't need to set up `$GOPATH` or `$GOROOT` anymore
+2. [Install Node.js](https://nodejs.org/) (for building the React frontend)
+   * Includes npm, which is needed for the web UI
 
 ### Running from source
 1. Clone this repository:
@@ -15,11 +17,25 @@ Installing Pao
    git clone https://github.com/arbrown/pao.git
    cd pao
    ```
-2. Install dependencies:
+2. Install Go dependencies:
    ```bash
    go mod download
    ```
-3. Build and run the server:
+3. Create the configuration file:
+   ```bash
+   cp conf/paoSettings.json.sample conf/paoSettings.json
+   ```
+   This creates a basic SQLite configuration. You can edit `conf/paoSettings.json` to customize database settings and encryption keys.
+
+4. Build the React frontend:
+   ```bash
+   cd react-app
+   npm install
+   npm run build
+   cd ..
+   ```
+
+5. Build and run the server:
    ```bash
    go run .
    ```
