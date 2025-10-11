@@ -5,14 +5,51 @@ A [Banqi](http://en.wikipedia.org/wiki/Banqi) Game Server
 
 Installing Pao
 --------------
-1. [Install Go](https://golang.org/doc/install) and [set up a workspace](https://golang.org/doc/code.html) - Make sure your `$GOPATH` and `$GOROOT` environment variables are set, and that the appropriate directories are added to your PATH if you want to run executables without using `go run`.
-    * This is the hardest (but probably most important) step.  Make sure to follow the instructions in the links.
-2. Get the pao source:
-`go get github.com/arbrown/pao` ![go get](./screenshots/go-get.png)  
-You can fork this repository and `go get` your own version to contribute changes upstream.
-3. Go to the path where the source was installed, and run pao.go
-![go run](./screenshots/go-run.png)  
-The server should begin running on port 2015.  Go to http://localhost:2015/ in a web browser to see the lobby.
+### Prerequisites
+1. [Install Go](https://golang.org/doc/install) (version 1.21 or later)
+   * Modern Go uses modules, so you don't need to set up `$GOPATH` or `$GOROOT` anymore
+
+### Running from source
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/arbrown/pao.git
+   cd pao
+   ```
+2. Install dependencies:
+   ```bash
+   go mod download
+   ```
+3. Build and run the server:
+   ```bash
+   go run .
+   ```
+   Or build a binary:
+   ```bash
+   go build -o pao .
+   ./pao
+   ```
+   The server will start on port 2015. Go to http://localhost:2015/ in a web browser to see the lobby.
+
+### Installing as a command
+You can install Pao globally using:
+```bash
+go install github.com/arbrown/pao@latest
+```
+Then run it with:
+```bash
+pao
+```
+
+### Development
+To contribute changes:
+1. Fork this repository on GitHub
+2. Clone your fork:
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/pao.git
+   cd pao
+   ```
+3. Make your changes and test them
+4. Submit a pull request to the upstream repository
 
 Joining a game
 --------------
