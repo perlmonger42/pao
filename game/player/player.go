@@ -17,19 +17,33 @@ type WsConn interface {
 // NewPlayer will create a new player (or kibitzer) for a pao server
 func NewPlayer(c WsConn, name string, user *httpauth.UserData, kibitzer bool, bot bool) *Player {
 	return &Player{
-		Ws:       c,
-		Name:     name,
-		User:     user,
-		Kibitzer: kibitzer,
-		Bot:      bot,
+		Ws:        c,
+		Name:      name,
+		User:      user,
+		Kibitzer:  kibitzer,
+		Bot:       bot,
+		SessionID: "", // Will be set by game when needed
+	}
+}
+
+// NewPlayerWithSession creates a player with a specific session ID (for reconnection)
+func NewPlayerWithSession(c WsConn, name string, user *httpauth.UserData, kibitzer bool, bot bool, sessionID string) *Player {
+	return &Player{
+		Ws:        c,
+		Name:      name,
+		User:      user,
+		Kibitzer:  kibitzer,
+		Bot:       bot,
+		SessionID: sessionID,
 	}
 }
 
 // Player contains information about a player and how to communicate with them
 type Player struct {
-	Name     string
-	Ws       WsConn
-	User     *httpauth.UserData
-	Kibitzer bool
-	Bot      bool
+	Name      string
+	Ws        WsConn
+	User      *httpauth.UserData
+	Kibitzer  bool
+	Bot       bool
+	SessionID string // Unique session ID for reconnection
 }
