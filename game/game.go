@@ -8,7 +8,6 @@ import (
 	"math/rand"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/apexskier/httpauth"
 	"github.com/arbrown/pao/game/command"
@@ -21,25 +20,25 @@ import (
 // Game is a struct that represents the state and connections of a multiplayer
 // ban qi game that the server is hosting.
 type Game struct {
-	ID                   string
-	gameState            gamestate.Gamestate
-	black, red           *player.Player
-	blackUndo, redUndo   bool
-	redStalemateProposed bool
+	ID                     string
+	gameState              gamestate.Gamestate
+	black, red             *player.Player
+	blackUndo, redUndo     bool
+	redStalemateProposed   bool
 	blackStalemateProposed bool
-	lastMove             []string
-	lastDead             string
-	active             bool
-	commandChan        chan command.PlayerCommand
-	db                 *sql.DB
-	Players            []*player.Player
-	CurrentPlayerIndex int
-	pieceToInt         map[string]int
-	canAttack          [][]bool
-	gameOverChan       chan bool
-	removeGameChan     chan *Game
-	kibitzers          []*player.Player
-	moveHistory        []*move
+	lastMove               []string
+	lastDead               string
+	active                 bool
+	commandChan            chan command.PlayerCommand
+	db                     *sql.DB
+	Players                []*player.Player
+	CurrentPlayerIndex     int
+	pieceToInt             map[string]int
+	canAttack              [][]bool
+	gameOverChan           chan bool
+	removeGameChan         chan *Game
+	kibitzers              []*player.Player
+	moveHistory            []*move
 }
 
 var upgrader = &websocket.Upgrader{
@@ -160,7 +159,7 @@ func (g *Game) closeWebSockets() {
 	}
 }
 
-func readLoop(c *websocket.Conn) {
+func readLoop(c player.WsConn) {
 	for {
 		if _, _, err := c.NextReader(); err != nil {
 			c.Close()
@@ -174,7 +173,11 @@ func (g *Game) startGame() {
 
 	fmt.Println("game loop started")
 	defer func() { fmt.Println("game loop ended") }()
-	rand.Seed(time.Now().UTC().UnixNano())
+
+	// As of Go 1.20, rand.Seed is deprecated.
+	// The generator is seeded randomly at program startup.
+	// rand.Seed(time.Now().UTC().UnixNano())
+
 	g.gameState.KnownBoard = generateUnknownBoard()
 	for {
 		fmt.Println("Listening!")
@@ -182,10 +185,9 @@ func (g *Game) startGame() {
 		case c := <-g.commandChan:
 			fmt.Println("Heard a command")
 			// handle p1 move
-			g.handleCommand(c)
+			g.HandleCommand(c)
 			fmt.Println("Done handling command")
-			break
-		case _ = <-g.gameOverChan:
+		case <-g.gameOverChan:
 			fmt.Println("Got a message on gameOverChan")
 			return
 		}
@@ -193,7 +195,7 @@ func (g *Game) startGame() {
 
 }
 
-func (g *Game) handleCommand(c command.PlayerCommand) {
+func (g *Game) HandleCommand(c command.PlayerCommand) {
 	fmt.Printf("Got command: %+v\n", c)
 	// if g.currentPlayer != c.p {
 	// 	r := command{Action: "info", Argument: "Not your turn!"}
@@ -210,7 +212,7 @@ func (g *Game) handleCommand(c command.PlayerCommand) {
 		if c.P == g.red {
 			color = "red"
 		}
-		if c.P.Kibitzer == true {
+		if c.P.Kibitzer {
 			color = "teal"
 		}
 
@@ -221,7 +223,7 @@ func (g *Game) handleCommand(c command.PlayerCommand) {
 	case "board?":
 		g.broadcastBoard()
 	case "move":
-		if c.P.Kibitzer == true {
+		if c.P.Kibitzer {
 			g.suggestMove(c)
 		} else if ok := g.tryMove(c); ok {
 			// check for a victory
@@ -251,15 +253,7 @@ func (g *Game) handleSlashCommand(c command.PlayerCommand) string {
 	}
 	if strings.EqualFold(c.C.Argument, "/taunt") {
 		randomTaunt := g.GetTaunt()
-		color := "black" // Default color
-		if c.P == g.red {
-			color = "red"
-		}
-		if c.P.Kibitzer == true {
-			color = "teal"
-		}
-		g.broadcastChat(c.P, randomTaunt, color)
-		return ""
+		return randomTaunt
 	}
 	return ""
 }
@@ -555,7 +549,6 @@ func (g *Game) endGame() {
 	g.gameOverChan = nil
 	g.closeWebSockets()
 	fmt.Println("Trying to return from endGame")
-	return
 }
 
 func (g *Game) broadcast(v interface{}) {
@@ -623,7 +616,7 @@ func (g *Game) listenPlayer(p *player.Player) {
 	}
 }
 
-//NewGame returns a newly initialized game struct
+// NewGame returns a newly initialized game struct
 func NewGame(id string, removeGameChan chan *Game, db *sql.DB) *Game {
 	return &Game{
 		ID:           id,
@@ -744,7 +737,6 @@ func (g *Game) flip(m *move) (bool, string) {
 		case "K", "G", "E", "C", "H", "P", "Q":
 			g.black = g.CurrentPlayer()
 			g.red = g.NextPlayer()
-			break
 		case "k", "g", "e", "c", "h", "p", "q":
 			g.red = g.CurrentPlayer()
 			g.black = g.NextPlayer()
